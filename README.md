@@ -6,7 +6,7 @@ AC systems dry out indoor air, and prolonged exposure to low humidity (below rou
 
 ## Why not DHT11 / DHT22
 
-The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably over months of continuous use. The DHT22 is somewhat better but still less stable than a digital I2C sensor over long-term operation in a humid microclimate near a mist maker. This project uses the **SHT31**, which is factory-calibrated to roughly +/-2% RH, reads faster over I2C, and holds calibration much better over time. An HTU21D/SHT21 module is a reasonable same-price substitute if SHT31 is not locally available.
+The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably over months of continuous use. The DHT22 is somewhat better but still less stable than a digital I2C sensor over long-term operation in a humid microclimate near a mist maker. This project uses the **SHT31**, which is factory-calibrated to roughly +/-2% RH, reads faster over I2C, and holds calibration much better over time. An SHT21 module is a reasonable same-price substitute if SHT31 is not locally available.
 
 ## Features
 
