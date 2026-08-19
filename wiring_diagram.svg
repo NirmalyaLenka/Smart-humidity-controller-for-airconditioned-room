@@ -1,0 +1,81 @@
+<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+  <rect x="0" y="0" width="900" height="560" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="20" y="30" font-size="20" font-weight="bold" fill="#111">Smart Humidity Controller - Wiring Diagram</text>
+
+  <!-- NodeMCU box -->
+  <rect x="330" y="90" width="240" height="300" rx="8" fill="#eef3ff" stroke="#3b5bdb" stroke-width="2"/>
+  <text x="450" y="115" font-size="15" font-weight="bold" text-anchor="middle" fill="#1f2d5c">NodeMCU ESP8266</text>
+
+  <text x="345" y="150" font-size="13" fill="#1f2d5c">D1 (SCL)</text>
+  <text x="345" y="175" font-size="13" fill="#1f2d5c">D2 (SDA)</text>
+  <text x="345" y="200" font-size="13" fill="#1f2d5c">D5 (Relay IN)</text>
+  <text x="345" y="225" font-size="13" fill="#1f2d5c">D6 (Water Level)</text>
+  <text x="345" y="250" font-size="13" fill="#1f2d5c">3V3</text>
+  <text x="345" y="275" font-size="13" fill="#1f2d5c">GND</text>
+  <text x="345" y="300" font-size="13" fill="#1f2d5c">VIN (5V)</text>
+
+  <!-- SHT31 -->
+  <rect x="640" y="70" width="200" height="80" rx="8" fill="#eafff0" stroke="#1a7f37" stroke-width="2"/>
+  <text x="740" y="95" font-size="14" font-weight="bold" text-anchor="middle" fill="#0f5c2a">SHT31 Sensor</text>
+  <text x="740" y="115" font-size="12" text-anchor="middle" fill="#0f5c2a">SDA / SCL / VCC / GND</text>
+  <text x="740" y="132" font-size="11" text-anchor="middle" fill="#0f5c2a">I2C address 0x44</text>
+
+  <!-- OLED -->
+  <rect x="640" y="170" width="200" height="70" rx="8" fill="#eafff0" stroke="#1a7f37" stroke-width="2"/>
+  <text x="740" y="195" font-size="14" font-weight="bold" text-anchor="middle" fill="#0f5c2a">SSD1306 OLED</text>
+  <text x="740" y="215" font-size="12" text-anchor="middle" fill="#0f5c2a">optional, shares I2C bus</text>
+
+  <!-- Water level sensor -->
+  <rect x="640" y="260" width="200" height="70" rx="8" fill="#eafff0" stroke="#1a7f37" stroke-width="2"/>
+  <text x="740" y="285" font-size="14" font-weight="bold" text-anchor="middle" fill="#0f5c2a">Water Level Switch</text>
+  <text x="740" y="305" font-size="12" text-anchor="middle" fill="#0f5c2a">optional, pulls pin LOW</text>
+
+  <!-- Relay module -->
+  <rect x="60" y="150" width="200" height="90" rx="8" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="160" y="175" font-size="14" font-weight="bold" text-anchor="middle" fill="#8a3800">1-Channel Relay Module</text>
+  <text x="160" y="195" font-size="12" text-anchor="middle" fill="#8a3800">IN / VCC / GND</text>
+  <text x="160" y="212" font-size="12" text-anchor="middle" fill="#8a3800">COM / NO contacts</text>
+
+  <!-- Mains / Humidifier -->
+  <rect x="60" y="290" width="200" height="90" rx="8" fill="#ffe3e3" stroke="#c92a2a" stroke-width="2"/>
+  <text x="160" y="315" font-size="14" font-weight="bold" text-anchor="middle" fill="#7d1212">Ultrasonic Mist Maker</text>
+  <text x="160" y="335" font-size="12" text-anchor="middle" fill="#7d1212">12V supply switched</text>
+  <text x="160" y="352" font-size="12" text-anchor="middle" fill="#7d1212">through relay COM/NO</text>
+
+  <!-- Power supply -->
+  <rect x="60" y="410" width="200" height="70" rx="8" fill="#f3f0ff" stroke="#5f3dc4" stroke-width="2"/>
+  <text x="160" y="435" font-size="14" font-weight="bold" text-anchor="middle" fill="#3a2678">12V DC Adapter</text>
+  <text x="160" y="455" font-size="12" text-anchor="middle" fill="#3a2678">feeds mist maker + buck to 5V</text>
+
+  <!-- Connections -->
+  <!-- NodeMCU to SHT31 -->
+  <line x1="330" y1="145" x2="200" y2="145" stroke="none"/>
+  <path d="M330 145 C 500 145, 500 100, 640 100" stroke="#1a7f37" stroke-width="2" fill="none"/>
+  <path d="M330 170 C 500 170, 500 130, 640 130" stroke="#1a7f37" stroke-width="2" fill="none"/>
+
+  <!-- NodeMCU to OLED -->
+  <path d="M330 145 C 560 145, 560 200, 640 200" stroke="#1a7f37" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+
+  <!-- NodeMCU to water level -->
+  <path d="M330 220 C 560 220, 560 290, 640 290" stroke="#1a7f37" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+
+  <!-- NodeMCU to relay IN -->
+  <path d="M330 195 C 300 195, 300 190, 260 190" stroke="#e8590c" stroke-width="2" fill="none"/>
+
+  <!-- Relay to mist maker -->
+  <path d="M160 240 L 160 290" stroke="#c92a2a" stroke-width="2" fill="none"/>
+
+  <!-- PSU to relay and mist maker -->
+  <path d="M160 410 L 160 380" stroke="#5f3dc4" stroke-width="2" fill="none"/>
+  <path d="M160 410 C 100 410, 100 240, 160 240" stroke="#5f3dc4" stroke-width="2" fill="none"/>
+
+  <!-- PSU to NodeMCU VIN (through 5V buck, noted in text) -->
+  <path d="M260 445 C 300 445, 300 300, 330 300" stroke="#5f3dc4" stroke-width="2" stroke-dasharray="4 3" fill="none"/>
+  <text x="270" y="400" font-size="11" fill="#3a2678">via 5V buck</text>
+
+  <!-- Legend -->
+  <text x="20" y="520" font-size="12" fill="#333">Solid lines: direct wired connection</text>
+  <text x="20" y="538" font-size="12" fill="#333">Dashed lines: optional module</text>
+</svg>
