@@ -65,7 +65,7 @@ Wiring overview is in `docs/wiring_diagram.svg`.
 
 ## Calibration check
 
-SHT31 modules ship factory-calibrated, but it is worth a sanity check after assembly: compare the reading against a known reference (a cheap analog hygrometer, or a saturated salt calibration if you want to be thorough) and confirm it lands within a couple of percent. If your sensor reads far off, check the I2C address (0x44 default, 0x45 on some boards with the ADDR pin pulled high) and wiring before assuming the sensor is faulty.
+SHT31 modules ship factory-calibrated, but it is worth a sanity check after assembly: compare the reading against a known reference (a  analog hygrometer, or a saturated salt calibration if you want to be thorough) and confirm it lands within a couple of percent. If your sensor reads far off, check the I2C address (0x44 default, 0x45 on some boards with the ADDR pin pulled high) and wiring before assuming the sensor is faulty.
 
 ## Operating notes
 
@@ -76,3 +76,7 @@ SHT31 modules ship factory-calibrated, but it is worth a sanity check after asse
 ## License
 
 MIT, see `LICENSE`.
+## contact details for any help 
+my gmail is carmodbhai@gmail.com 
+if you want to contact through call or whatsapp contact 9692005585
+##                  Thankyou
