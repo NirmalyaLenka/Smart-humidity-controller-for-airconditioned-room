@@ -6,13 +6,16 @@ AC systems dry out indoor air, and prolonged exposure to low humidity (below rou
 
 ## Why not DHT11 / DHT22
 
-The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably over months of continuous use. The DHT22 is somewhat better but still less stable than a digital I2C sensor over long-term operation in a humid microclimate near a mist maker. This project uses the **SHT31**, which is factory-calibrated to roughly +/-2% RH, reads faster over I2C, and holds calibration much better over time. An SHT21 module is a reasonable same-price substitute if SHT31 is not locally available.
+The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably over months of continuous use. The DHT22 is somewhat better but still less stable than a digital I2C sensor over long-term operation in a humid microclimate near a mist maker. This project uses the **SHT31**, which is factory-calibrated to roughly +/-2% RH, reads faster over I2C, and holds calibration much better over time. An HTU21D/SHT21 module is a reasonable same-price substitute if SHT31 is not locally available.
 
 ## Features
 
 - Reads RH and temperature every few seconds from an SHT31.
+- Moving-average filter (last 8 samples by default) smooths sensor noise; the relay reacts to the smoothed value, not raw jitter.
 - Hysteresis control (default: ON below 40% RH, OFF above 50% RH) with a minimum on/off dwell time so the relay and pump are not switched rapidly.
-- Web dashboard served directly from the ESP8266: live readings, humidifier state, and an editable setpoint form.
+- Stall detection: if the relay stays on for 10 minutes with no measurable humidity rise, the controller latches a fault, stops trying, and flags it on the dashboard and OLED, rather than running an empty or broken mist maker indefinitely.
+- AC-state gating: the humidifier only runs while the room is inferred to be actively cooling, using a temperature-trend heuristic on the existing SHT31 (no extra hardware). An optional current-sensor mode is available for more reliable detection, see `docs/CIRCUIT_NOTES.md`. A dashboard checkbox can override gating if you want the humidifier to run regardless.
+- Web dashboard served directly from the ESP8266: live readings (raw and smoothed), humidifier state, inferred AC state, fault status, and an editable setpoint form.
 - `/data` JSON endpoint for logging or integrating with other tools.
 - Setpoints are stored in EEPROM and survive power loss.
 - Optional water level cut-off so the mist maker cannot run dry.
@@ -63,9 +66,20 @@ Wiring overview is in `docs/wiring_diagram.svg`.
 6. Open the Serial Monitor at 115200 baud to see the assigned IP address once Wi-Fi connects.
 7. Visit that IP address in a browser on the same network to view the dashboard.
 
+## Tuning the control behavior
+
+All of the following live in `firmware/config.h`:
+
+- `MOVING_AVERAGE_SAMPLES`: how many readings are averaged. Higher smooths more but reacts slower.
+- `STALL_CHECK_TIME_MS` / `STALL_MIN_RISE`: how long the relay can run and how much rise counts as progress before a fault latches. Loosen these (longer time, smaller rise) if your room is large or the mist maker is small, since it will naturally take longer to move the reading.
+- `AC_GATING_MODE`: `0` to ignore AC state entirely, `1` for the free temperature-trend heuristic, `2` for a wired current sensor.
+- `AC_TEMP_WINDOW_MS` / `AC_TEMP_DROP_THRESHOLD`: how the temperature-trend heuristic decides the AC is running. If it is triggering falsely, increase the drop threshold; if it is missing real AC cycles, decrease it or shorten the window.
+
+A stalled fault only clears from the dashboard's Clear Fault button, on purpose, so a real problem (empty reservoir, seized pump, failed transducer) does not silently retry forever.
+
 ## Calibration check
 
-SHT31 modules ship factory-calibrated, but it is worth a sanity check after assembly: compare the reading against a known reference (a  analog hygrometer, or a saturated salt calibration if you want to be thorough) and confirm it lands within a couple of percent. If your sensor reads far off, check the I2C address (0x44 default, 0x45 on some boards with the ADDR pin pulled high) and wiring before assuming the sensor is faulty.
+SHT31 modules ship factory-calibrated, but it is worth a sanity check after assembly: compare the reading against a known reference (a cheap analog hygrometer, or a saturated salt calibration if you want to be thorough) and confirm it lands within a couple of percent. If your sensor reads far off, check the I2C address (0x44 default, 0x45 on some boards with the ADDR pin pulled high) and wiring before assuming the sensor is faulty.
 
 ## Operating notes
 
@@ -76,7 +90,3 @@ SHT31 modules ship factory-calibrated, but it is worth a sanity check after asse
 ## License
 
 MIT, see `LICENSE`.
-## contact details for any help 
-my gmail is carmodbhai@gmail.com 
-if you want to contact through call or whatsapp contact 9692005585
-##                  Thankyou
