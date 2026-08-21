@@ -35,6 +35,15 @@ The ultrasonic transducer in a mist maker can overheat and fail if it runs witho
 - Mount the SHT31 away from the direct mist plume and away from the AC's cold air discharge; both will give a local reading that does not represent the room average.
 - A height of around 1 - 1.5 m above the floor, on an interior wall away from windows and doors, gives a reading closer to the room's general condition.
 
+## AC-state current sensing (optional, AC_GATING_MODE 2)
+
+The default AC detection (`AC_GATING_MODE 1`) needs no extra hardware; it infers AC activity from the SHT31 temperature trend. If you want more reliable detection, add a current sensor on the AC unit's mains feed instead:
+
+- Use a **non-invasive clamp-on current transformer** (for example SCT-013-030), which clips around the outside of one mains conductor. Never cut into or wire a sensor in series with the mains conductor itself.
+- The CT's output feeds a burden resistor sized for your CT and expected AC current, then a simple rectifier (diode + smoothing capacitor, or a precision rectifier if you want better low-current accuracy) into the ESP8266's single analog pin (A0), scaled to stay within 0-1V (or 0-3.3V if using a board with a resistor divider already on A0, such as most NodeMCU boards which divide down to 0-1V internally).
+- Set `HAS_AC_CURRENT_SENSOR` to 1 and `AC_GATING_MODE` to 2 in `config.h`, then calibrate `AC_CURRENT_THRESHOLD` against your specific CT and burden resistor by watching the raw analog readings (temporarily log them over Serial) with the AC on and off.
+- If you are not confident wiring a CT and burden resistor safely, stick with the temperature-trend heuristic; it costs nothing and needs no mains-adjacent wiring at all.
+
 ## Grounding and mains safety
 
 This project switches a low-voltage (12V) DC load only; it does not switch mains voltage. If you choose to control a mains-powered humidifier appliance instead of a bare mist maker module, use a relay module rated for mains voltage and current, keep all mains wiring physically separated from the low-voltage side, and add fusing on the mains side. Mains wiring should only be done by someone competent to do so safely.
