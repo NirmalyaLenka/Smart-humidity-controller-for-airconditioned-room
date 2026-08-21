@@ -43,6 +43,58 @@
 // Sensor read interval
 #define SENSOR_READ_INTERVAL_MS 3000UL
 
+// ---------------------------------------------------------------
+// Moving average filter
+// ---------------------------------------------------------------
+// Control decisions use the average of the last N humidity samples
+// instead of the raw instantaneous reading. This smooths sensor
+// noise so the relay does not toggle on single noisy samples near
+// a setpoint. Raw and smoothed values are both exposed on the
+// dashboard and /data endpoint.
+#define MOVING_AVERAGE_SAMPLES 8
+
+// ---------------------------------------------------------------
+// Stall detection
+// ---------------------------------------------------------------
+// If the relay has been ON continuously for STALL_CHECK_TIME_MS and
+// the smoothed humidity has risen by less than STALL_MIN_RISE over
+// that window, something is wrong (empty reservoir past what the
+// float switch caught, clogged transducer, disconnected pump, or a
+// door/window left open). The controller latches a fault, forces the
+// relay off, and shows a warning until cleared from the dashboard.
+#define HAS_STALL_DETECTION 1
+#define STALL_CHECK_TIME_MS (10UL * 60UL * 1000UL)  // 10 minutes
+#define STALL_MIN_RISE 1.0f                          // percent RH
+
+// ---------------------------------------------------------------
+// AC-state gating
+// ---------------------------------------------------------------
+// When the AC is off, room humidity tends to drift back up on its
+// own, so there is no point running the humidifier. Two detection
+// modes are available:
+//   0 = disabled, humidifier runs purely on the humidity band
+//   1 = temperature trend heuristic (no extra hardware, uses the
+//       SHT31 that is already on the board)
+//   2 = current sensor on the AC's mains feed (extra hardware,
+//       more reliable, see docs/CIRCUIT_NOTES.md for safe wiring)
+#define AC_GATING_MODE 1
+
+// Mode 1 (temperature trend) parameters. The controller tracks the
+// highest temperature seen in the last AC_TEMP_WINDOW_MS and treats
+// the AC as "on" once the current reading has dropped at least
+// AC_TEMP_DROP_THRESHOLD below that recent high.
+#define AC_TEMP_WINDOW_MS (20UL * 60UL * 1000UL)  // 20 minutes
+#define AC_TEMP_DROP_THRESHOLD 1.0f                // degrees C
+
+// Mode 2 (current sensor) parameters. Requires a non-invasive CT
+// clamp (for example SCT-013-030) around one AC mains conductor,
+// feeding a burden resistor and rectifier into an analog pin. Do
+// not wire any sensor directly in series with mains wiring. See
+// docs/CIRCUIT_NOTES.md before enabling this mode.
+#define HAS_AC_CURRENT_SENSOR 0
+#define PIN_AC_CURRENT A0
+#define AC_CURRENT_THRESHOLD 100   // raw ADC peak, calibrate for your CT/burden setup
+
 // EEPROM layout
 #define EEPROM_SIZE       32
 #define EEPROM_ADDR_LOW   0   // float, 4 bytes
@@ -60,3 +112,4 @@
 #define WEB_SERVER_PORT 80
 
 #endif
+
