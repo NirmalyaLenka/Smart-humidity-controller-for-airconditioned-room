@@ -24,7 +24,7 @@ The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably o
 
 ## Repository layout
 
-```
+``
 smart-humidity-controller/
   firmware/
     smart_humidity_controller.ino   main sketch
