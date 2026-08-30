@@ -9,9 +9,9 @@
 #define HAS_OLED              1   // 0.96" SSD1306 I2C display
 #define HAS_WATER_LEVEL_SENSOR 1  // float switch / water level probe in the reservoir
 
-// ---------------------------------------------------------------
+// --------------------------------------------------------------
 // Pin mapping (NodeMCU silkscreen labels)
-// ---------------------------------------------------------------
+// --------------------------------------------------------------
 #define PIN_I2C_SDA   4   // D2
 #define PIN_I2C_SCL   5   // D1
 #define PIN_RELAY     14  // D5 - drives the relay module IN pin
