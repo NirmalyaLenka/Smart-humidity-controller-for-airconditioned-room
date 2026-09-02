@@ -90,3 +90,5 @@ SHT31 modules ship factory-calibrated, but it is worth a sanity check after asse
 ## License
 
 MIT, see `LICENSE`.
+## for more info please contact to carmodbhai@gmail.com
+
