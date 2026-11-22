@@ -9,7 +9,7 @@ Prices are approximate street/online prices in India (INR) at the time of writin
 | 1-channel 5V relay module | Switches the mist maker on/off | 50 - 90 |
 | Ultrasonic mist maker (12V, 20mm disc + driver board) | Adds moisture to the air | 150 - 300 |
 | 12V 2A DC adapter | Powers the mist maker driver board | 200 - 300 |
-| 5V buck converter (or AMS1117 module) | Steps 12V down to power the NodeMCU from the same supply | 40 - 80 |
+| 5V DC-DC buck converter (12V input, rated for NodeMCU load) | Steps 12V down to regulated 5V for NodeMCU VIN | 40 - 80 |
 | Small plastic reservoir (0.5 - 1 L) | Holds water for the mist maker | 50 - 100 (or reused container) |
 | Float switch / water level probe | Optional, stops the pump running dry | 30 - 80 |
 | 0.96" SSD1306 OLED (I2C) | Optional, local status display | 120 - 180 |
@@ -19,6 +19,8 @@ Prices are approximate street/online prices in India (INR) at the time of writin
 **Minimum viable build (no OLED, no water level sensor): roughly 850 - 1350 INR.**
 
 ## Cost-cutting notes
+
+- Do not treat an AMS1117 linear-regulator module as a drop-in 12V-to-5V buck converter. A linear regulator dissipates the voltage difference as heat; choose a DC-DC converter with a suitable input range and current rating for the NodeMCU.
 
 - The relay module can be replaced with a single NPN transistor (2N2222 or BC547), a 1N4007 flyback diode, and a bare relay for a saving of roughly 30-40 INR. The firmware logic is identical either way.
 - A small aquarium air pump plus a wick/sponge humidifier is a lower-power, mechanically simpler alternative to the ultrasonic mist maker if you cannot source one locally, though it humidifies more slowly.
