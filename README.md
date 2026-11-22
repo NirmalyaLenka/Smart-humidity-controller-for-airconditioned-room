@@ -1,105 +1,123 @@
-# Smart Humidity Controller for an AC Room
+# Smart Humidity Controller for an Air-Conditioned Room
 
-Automatically maintains a healthy relative humidity band in an air-conditioned room by switching an ultrasonic mist maker on and off through a relay, based on live readings from an SHT31 digital humidity/temperature sensor.
+An ESP8266 NodeMCU prototype that reads relative humidity and temperature from an SHT31 sensor and switches a low-voltage ultrasonic mist maker through a relay. A web page on the device displays the readings and allows the humidity on/off thresholds to be changed. An optional SSD1306 OLED and reservoir float switch are supported by compile-time flags.
 
-AC systems dry out indoor air, and prolonged exposure to low humidity (below roughly 30-35% RH) is associated with dry skin, irritated eyes and airways, and increased static and dust. This project targets a working band of 40-50% RH by default, adjustable from a web dashboard.
+> **Prototype and safety status:** The checked-in firmware is a simple hysteresis controller, not a validated indoor-climate or safety system. It does not dehumidify, and the current sketch does not implement all of the advanced options described by some constants in `config.h`. Read [Current behavior and limitations](#current-behavior-and-limitations) before wiring or relying on it.
 
-## Why not DHT11 / DHT22
+## Implemented behavior
 
-The DHT11 has roughly +/-5% RH accuracy, updates slowly, and drifts noticeably over months of continuous use. The DHT22 is somewhat better but still less stable than a digital I2C sensor over long-term operation in a humid microclimate near a mist maker. This project uses the **SHT31**, which is factory-calibrated to roughly +/-2% RH, reads faster over I2C, and holds calibration much better over time. An HTU21D/SHT21 module is a reasonable same-price substitute if SHT31 is not locally available.
-
-## Features
-
-- Reads RH and temperature every few seconds from an SHT31.
-- Moving-average filter (last 8 samples by default) smooths sensor noise; the relay reacts to the smoothed value, not raw jitter.
-- Hysteresis control (default: ON below 40% RH, OFF above 50% RH) with a minimum on/off dwell time so the relay and pump are not switched rapidly.
-- Stall detection: if the relay stays on for 10 minutes with no measurable humidity rise, the controller latches a fault, stops trying, and flags it on the dashboard and OLED, rather than running an empty or broken mist maker indefinitely.
-- AC-state gating: the humidifier only runs while the room is inferred to be actively cooling, using a temperature-trend heuristic on the existing SHT31 (no extra hardware). An optional current-sensor mode is available for more reliable detection, see `docs/CIRCUIT_NOTES.md`. A dashboard checkbox can override gating if you want the humidifier to run regardless.
-- Web dashboard served directly from the ESP8266: live readings (raw and smoothed), humidifier state, inferred AC state, fault status, and an editable setpoint form.
-- `/data` JSON endpoint for logging or integrating with other tools.
-- Setpoints are stored in EEPROM and survive power loss.
-- Optional water level cut-off so the mist maker cannot run dry.
-- Optional local OLED status screen.
-- Every extra part is behind a compile-time flag in `config.h`, so the build can be trimmed down to the cheapest working version.
+- Reads SHT31 humidity and temperature every 3 seconds.
+- Default control band: turn the humidifier on below 40% RH and off at/above 50% RH.
+- Enforces minimum relay on/off dwell times (30 seconds on and 20 seconds off by default).
+- Forces the relay off when the SHT31 reading is invalid or the enabled float switch indicates low water.
+- Optional SSD1306 OLED status display and optional low-water input.
+- Stores the low/high setpoints in EEPROM.
+- Serves a local dashboard at `/`, accepts setpoint updates at `POST /set`, and exposes readings/state at `GET /data`.
 
 ## Repository layout
 
-``
-smart-humidity-controller/
-  firmware/
-    smart_humidity_controller.ino   main sketch
-    config.h                        pin mapping and tunable parameters
-  docs/
-    wiring_diagram.svg              block wiring diagram
-    BOM.md                          parts list with approximate cost
-    CIRCUIT_NOTES.md                relay/transistor driving and safety notes
-  README.md
-  LICENSE
-```
+All project files are at the repository root; there are no `firmware/` or `docs/` directories.
 
-## Hardware
+| Path | Purpose |
+|---|---|
+| [`smart_humidity_controller.ino`](smart_humidity_controller.ino) | Main ESP8266 sketch |
+| [`config.h`](config.h) | Pin mappings, feature flags, Wi-Fi placeholders, and control constants |
+| [`wiring_diagram.svg`](wiring_diagram.svg) | Wiring diagram |
+| [`BOM.md`](BOM.md) | Bill of materials and approximate cost estimates |
+| [`CIRCUIT_NOTES.md`](CIRCUIT_NOTES.md) | Power rails, relay wiring, water-level input, sensor placement, and safety notes |
+| [`LICENSE`](LICENSE) | MIT license text |
 
-See `docs/BOM.md` for the full parts list and pricing, and `docs/CIRCUIT_NOTES.md` for wiring and safety detail. Summary:
+## Hardware and pinout
 
-- NodeMCU ESP8266
-- SHT31 humidity/temperature sensor (I2C)
-- 1-channel relay module
-- Ultrasonic mist maker (12V) as the humidifying element
-- 12V DC adapter, plus a 5V buck converter to power the NodeMCU from the same supply
-- Optional: SSD1306 OLED, float switch water level sensor
+The pin definitions are in `config.h` and use NodeMCU board labels as shown here.
 
-Wiring overview is in `docs/wiring_diagram.svg`.
+| Function | NodeMCU label | ESP8266 GPIO / note |
+|---|---|---|
+| SHT31 SDA | D2 | GPIO4 |
+| SHT31 SCL | D1 | GPIO5 |
+| Relay module IN | D5 | GPIO14 |
+| Optional float switch | D6 | GPIO12; switch to GND when water is low |
+| On-board status LED | D4 | GPIO2; active-low on common boards |
+| Optional SSD1306 OLED | D2 / D1 | Shared I2C bus; firmware uses address 0x3C |
+| SHT31 sensor | D2 / D1 | Firmware initializes address 0x44 |
 
-## Firmware setup
+Check the exact board and module pin labels before wiring. The relay input polarity is controlled by `RELAY_ACTIVE_LOW`; the default is `true`.
 
-1. Install the ESP8266 board package in the Arduino IDE (Boards Manager, search "esp8266").
-2. Install libraries via Library Manager:
-   - Adafruit SHT31 Library
-   - Adafruit GFX Library (only needed if `HAS_OLED` is 1)
-   - Adafruit SSD1306 (only needed if `HAS_OLED` is 1)
-3. Open `firmware/smart_humidity_controller.ino`.
-4. Edit `firmware/config.h`:
-   - Set `WIFI_SSID` and `WIFI_PASSWORD`.
-   - Set `HAS_OLED` and `HAS_WATER_LEVEL_SENSOR` to 0 if you are not building those parts.
-   - Adjust `DEFAULT_SETPOINT_LOW` / `DEFAULT_SETPOINT_HIGH` if you want a different starting range (these can also be changed later from the web dashboard).
-5. Select your board (NodeMCU 1.0) and port, then upload.
-6. Open the Serial Monitor at 115200 baud to see the assigned IP address once Wi-Fi connects.
-7. Visit that IP address in a browser on the same network to view the dashboard.
+### Power and load wiring
 
-## Tuning the control behavior
+- Power the mist-maker driver from its specified **12 V supply** through the relay's COM/NO contacts.
+- Power the NodeMCU from a suitable regulated **5 V DC-DC buck converter** connected to the board's VIN/5V input as appropriate for that board.
+- Connect the low-voltage grounds as required by the selected relay module and circuit.
+- Do not power the mist maker from the NodeMCU 3.3 V output.
+- Keep water and condensation away from the controller, relay contacts, and power supply. The firmware is designed for a low-voltage 12 V DC mist-maker load; it is not a mains-wiring guide.
 
-All of the following live in `firmware/config.h`:
+See [`CIRCUIT_NOTES.md`](CIRCUIT_NOTES.md) and [`wiring_diagram.svg`](wiring_diagram.svg) before assembling the circuit.
 
-- `MOVING_AVERAGE_SAMPLES`: how many readings are averaged. Higher smooths more but reacts slower.
-- `STALL_CHECK_TIME_MS` / `STALL_MIN_RISE`: how long the relay can run and how much rise counts as progress before a fault latches. Loosen these (longer time, smaller rise) if your room is large or the mist maker is small, since it will naturally take longer to move the reading.
-- `AC_GATING_MODE`: `0` to ignore AC state entirely, `1` for the free temperature-trend heuristic, `2` for a wired current sensor.
-- `AC_TEMP_WINDOW_MS` / `AC_TEMP_DROP_THRESHOLD`: how the temperature-trend heuristic decides the AC is running. If it is triggering falsely, increase the drop threshold; if it is missing real AC cycles, decrease it or shorten the window.
+## Prerequisites
 
-A stalled fault only clears from the dashboard's Clear Fault button, on purpose, so a real problem (empty reservoir, seized pump, failed transducer) does not silently retry forever.
+- Arduino IDE.
+- ESP8266 board support installed through Boards Manager.
+- Libraries installed through Library Manager:
+  - **Adafruit SHT31 Library**
+  - **Adafruit GFX Library** (only when `HAS_OLED` is `1`)
+  - **Adafruit SSD1306** (only when `HAS_OLED` is `1`)
 
-## Calibration check
+`Wire`, `EEPROM`, `ESP8266WiFi`, and `ESP8266WebServer` are provided by the ESP8266 Arduino core.
 
-SHT31 modules ship factory-calibrated, but it is worth a sanity check after assembly: compare the reading against a known reference (a cheap analog hygrometer, or a saturated salt calibration if you want to be thorough) and confirm it lands within a couple of percent. If your sensor reads far off, check the I2C address (0x44 default, 0x45 on some boards with the ADDR pin pulled high) and wiring before assuming the sensor is faulty.
+## Configure, build, and upload
 
-## Operating notes
+1. Assemble and inspect the low-voltage circuit with the mist-maker load disconnected.
+2. Open the root-level `smart_humidity_controller.ino` in Arduino IDE. Keep `config.h` in the same folder.
+3. In `config.h`, set `WIFI_SSID` and `WIFI_PASSWORD` to the intended Wi-Fi network. Do not commit real credentials to a public repository.
+4. Set `HAS_OLED` and `HAS_WATER_LEVEL_SENSOR` to `0` if the corresponding hardware is not installed.
+5. Confirm the relay module's input polarity and set `RELAY_ACTIVE_LOW` accordingly. Verify the relay's default/off state before connecting the mist maker.
+6. Select the matching NodeMCU / ESP8266 board and serial port, then compile and upload.
+7. Open Serial Monitor at **115200 baud**. The firmware attempts Wi-Fi connection for up to 15 seconds and prints the assigned IP address if connected.
+8. From a device on the same trusted network, open that IP address in a browser. The `/data` endpoint returns humidity, temperature, relay state, water-low state, and setpoints as JSON when sensor values are valid.
 
-- Refill the reservoir before it runs dry; the optional float switch will cut power to the relay and show a warning on the dashboard and OLED if it does.
-- Clean the ultrasonic transducer disc periodically; mineral buildup from tap water reduces mist output over time and can eventually stop it working. Distilled or RO water extends the interval between cleanings.
-- Recheck the setpoint band seasonally. What counts as comfortable shifts with outdoor climate and how long the AC runs per day.
+## Control settings
 
-## License
+The current sketch uses these values from `config.h`:
 
-MIT, see `LICENSE`.
-## for more info please contact to carmodbhai@gmail.com
+| Setting | Default | Effect |
+|---|---:|---|
+| `DEFAULT_SETPOINT_LOW` | 40% RH | Humidifier may turn on below this threshold |
+| `DEFAULT_SETPOINT_HIGH` | 50% RH | Humidifier may turn off at/above this threshold |
+| `MIN_ON_TIME_MS` | 30,000 ms | Minimum relay on duration before normal threshold-based shutoff |
+| `MIN_OFF_TIME_MS` | 20,000 ms | Minimum relay off duration before normal threshold-based startup |
+| `SENSOR_READ_INTERVAL_MS` | 3,000 ms | Sensor sampling interval |
+| `RELAY_ACTIVE_LOW` | `true` | Relay input polarity |
+| `HAS_OLED` | `1` | Enables OLED code |
+| `HAS_WATER_LEVEL_SENSOR` | `1` | Enables the low-water input |
 
+The dashboard accepts a new pair only when the high threshold is greater than the low threshold, the low threshold is at least 20, and the high threshold is at most 80. Accepted setpoints are stored in EEPROM and restored on boot.
 
+## Current behavior and limitations
 
----
+The current `smart_humidity_controller.ino` does **not** use the following advanced constants present in `config.h`: `MOVING_AVERAGE_SAMPLES`, `HAS_STALL_DETECTION`, `STALL_CHECK_TIME_MS`, `STALL_MIN_RISE`, `AC_GATING_MODE`, `AC_TEMP_WINDOW_MS`, `AC_TEMP_DROP_THRESHOLD`, `HAS_AC_CURRENT_SENSOR`, or `AC_CURRENT_THRESHOLD`. Therefore, moving-average filtering, stall-fault detection, AC-state gating, and current-transformer sensing should not be treated as implemented features. The current relay decisions use the latest accepted SHT31 humidity reading, simple hysteresis, dwell times, sensor validity, and the enabled water-level input.
 
-## Maintenance & Audit
+Other limitations:
 
-- **Audit date:** 11 November 2026
-- **Documentation status:** README reviewed and audit record added on this date.
-- **Scope and evidence:** This is a documentation-level maintenance pass. It does not establish that source code compiles, dependencies are current, security has been tested, or hardware/runtime behavior has been verified.
-- **Code and tests:** No new functional code changes or test results are claimed by this README update. Run project-specific build, test, and hardware/runtime checks before relying on the project.
-- **Maintenance baseline:** Documentation status recorded through 11 November 2026; revisit setup instructions, dependencies, safety limits, known limitations, and tests when the project changes.
+- The dashboard and `/set` endpoint have no authentication or HTTPS. Keep the device on a trusted, isolated local network; do not port-forward it or expose it directly to the internet.
+- The `/data` handler formats sensor values as numbers. If a reading is unavailable and represented as `nan`, the response may not be valid JSON; consumers should validate the response.
+- The controller only adds moisture. It cannot reduce humidity.
+- No calibration procedure, long-term logging, alarm service, or automatic recovery test is implemented.
+- A float switch is optional in the firmware and cannot replace checking the reservoir and transducer physically.
+
+## Troubleshooting
+
+| Symptom | Checks |
+|---|---|
+| SHT31 not found | Check D2/D1 wiring, power, ground, and I2C address (0x44 is used by the sketch) |
+| OLED blank | Confirm `HAS_OLED` is `1`, the library is installed, and the display uses the expected I2C wiring/address |
+| Relay stays on or behaves inverted | Disconnect the mist maker, verify module trigger polarity, then check `RELAY_ACTIVE_LOW` |
+| Water-low warning appears continuously | Check the float-switch wiring; the enabled input is expected to pull GPIO12 LOW when water is low |
+| No IP address | Recheck Wi-Fi credentials and 2.4 GHz network availability; inspect Serial Monitor at 115200 baud |
+| Mist maker runs when it should not | Disconnect its supply while debugging; verify sensor readings, relay polarity, and the low-water input before reconnecting the load |
+| Browser cannot reach dashboard | Confirm the ESP8266 joined Wi-Fi, use the printed local IP, and keep the browser on the same reachable network |
+
+## License and contact
+
+MIT; see [`LICENSE`](LICENSE).
+
+The previous README listed `carmodbhai@gmail.com` as a contact address.
