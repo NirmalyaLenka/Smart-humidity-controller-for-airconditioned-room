@@ -121,3 +121,13 @@ Other limitations:
 MIT; see [`LICENSE`](LICENSE).
 
 The previous README listed `carmodbhai@gmail.com` as a contact address.
+
+---
+
+## Maintenance & Audit
+
+- **Audit date:** 22 November 2026
+- **Documentation status:** README reviewed and audit record updated on this date.
+- **Scope and evidence:** This was a documentation-only review of the checked-in README, sketch, configuration, BOM, and circuit notes. It does not establish that the firmware compiles or that hardware has been tested.
+- **Code and tests:** No source/configuration behavior was changed. No compilation, Wi-Fi, relay, sensor, or hardware test was performed.
+- **Maintenance baseline:** Documentation status recorded through 22 November 2026; recheck the firmware against its configuration constants and validate the electrical assembly before deployment.
