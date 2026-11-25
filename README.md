@@ -131,3 +131,9 @@ The previous README listed `carmodbhai@gmail.com` as a contact address.
 - **Scope and evidence:** This was a documentation-only review of the checked-in README, sketch, configuration, BOM, and circuit notes. It does not establish that the firmware compiles or that hardware has been tested.
 - **Code and tests:** No source/configuration behavior was changed. No compilation, Wi-Fi, relay, sensor, or hardware test was performed.
 - **Maintenance baseline:** Documentation status recorded through 22 November 2026; recheck the firmware against its configuration constants and validate the electrical assembly before deployment.
+
+## Contact
+
+Maintained up to 25 November 2026.
+
+If you encounter any problems, please contact [carmodbhai@gmail.com](mailto:carmodbhai@gmail.com).
